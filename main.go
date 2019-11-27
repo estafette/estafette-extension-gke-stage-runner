@@ -128,26 +128,14 @@ func main() {
 	}
 	foundation.RunCommandWithArgs("gcloud", clustersGetCredentialsArsgs)
 
-	zerolog.Info().Msgf("Running image %v in GKE cluster %v...", params.RemoteStageImage, credential.AdditionalProperties.Cluster)
-
-	podName := fmt.Sprintf("")
-
-	gitSource = kingpin.Flag("source", "Source of the repository.").Envar("ESTAFETTE_GIT_SOURCE").Required().String()
-	gitOwner = kingpin.Flag("owner", "Ownner of the repository.").Envar("ESTAFETTE_GIT_OWNER").Required().String()
-	gitName = kingpin.Flag("name", "Name of the repository.").Envar("ESTAFETTE_GIT_NAME").Required().String()
-
-	buildID = kingpin.Flag("build-id", "Build ID.").Envar("ESTAFETTE_BUILD_ID").String()
-	releaseID = kingpin.Flag("release-id", "Release ID.").Envar("ESTAFETTE_RELEASE_ID").String()
-
-	stageName = kingpin.Flag("stage-name", "The name of the.").Envar("ESTAFETTE_STAGE_NAME").Required().String()
-	releaseName = kingpin.Flag("release-name", "Name of the release section, which is used by convention to resolve the credentials.").Envar("ESTAFETTE_RELEASE_NAME").String()
+	zerolog.Info().Msgf("Running image %v in GKE cluster %v...", params.RemoteImage, credential.AdditionalProperties.Cluster)
 
 	envvarsArg := ""
 	for k, v := range params.EnvVars {
 		envvarsArg += fmt.Sprintf("--env=\"%v=%v\" ", k, v)
 	}
 
-	foundation.RunCommand("kubectl run --rm --restart=Never -i %v --image=%v %v -n %v", getJobName(), params.RemoteStageImage, envvarsArg, params.Namespace)
+	foundation.RunCommand("kubectl run --rm --restart=Never -i %v --image=%v %v -n %v", getJobName(), params.RemoteImage, envvarsArg, params.Namespace)
 }
 
 func getJobName() string {
