@@ -135,7 +135,7 @@ func main() {
 		envvarsArg += fmt.Sprintf("--env=\"%v=%v\" ", k, v)
 	}
 
-	foundation.RunCommand("kubectl run --rm --restart=Never -i %v --image=%v %v -n %v", getJobName(), params.RemoteImage, envvarsArg, params.Namespace)
+	foundation.RunCommand("kubectl run %v --rm=true --restart=Never -i --image=%v %v -n %v", getJobName(), params.RemoteImage, envvarsArg, params.Namespace)
 }
 
 func getJobName() string {
@@ -143,20 +143,22 @@ func getJobName() string {
 	// create job name of max 63 chars
 	maxJobNameLength := 63
 
-	jobType := "build"
+	jobType := "stage"
+	//jobType := "build"
 	id := *buildID
 	if *releaseID != "" {
-		jobType = "release"
+		//jobType = "release"
 		id = *releaseID
 	}
 
 	re := regexp.MustCompile("[^a-zA-Z0-9]+")
-	repoName := re.ReplaceAllString(fmt.Sprintf("%v/%v/%v", *gitOwner, *gitName, *stageName), "-")
+	repoName := re.ReplaceAllString(fmt.Sprintf("%v/%v", *gitOwner, *gitName), "-")
+	stageNameCleaned := re.ReplaceAllString(*stageName, "-")
 
-	maxRepoNameLength := maxJobNameLength - len(jobType) - 1 - len(id) - 1
+	maxRepoNameLength := maxJobNameLength - len(jobType) - 1 - len(id) - 1 - len(stageNameCleaned) - 1
 	if len(repoName) > maxRepoNameLength {
 		repoName = repoName[:maxRepoNameLength]
 	}
 
-	return strings.ToLower(fmt.Sprintf("%v-%v-%v", jobType, repoName, id))
+	return strings.ToLower(fmt.Sprintf("%v-%v-%v-%v", jobType, stageNameCleaned, repoName, id))
 }
