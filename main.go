@@ -132,7 +132,7 @@ func main() {
 
 	args := []string{"run", getJobName(), "--rm=true", "--restart=Never", "-i", fmt.Sprintf("--image=%v", params.RemoteImage), fmt.Sprintf("-n %v", params.Namespace)}
 	for k, v := range params.EnvVars {
-		args = append(args, fmt.Sprintf("--env=\"%v=%v\" ", k, v))
+		args = append(args, fmt.Sprintf("--env='%v=%v' ", k, v))
 	}
 
 	foundation.RunCommandWithArgs("kubectl", args)
