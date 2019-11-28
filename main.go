@@ -130,12 +130,12 @@ func main() {
 
 	zerolog.Info().Msgf("Running image %v in GKE cluster %v...", params.RemoteImage, credential.AdditionalProperties.Cluster)
 
-	envvarsArg := ""
+	args := []string{"run", getJobName(), "--rm=true", "--restart=Never", "-i", fmt.Sprintf("--image=%v", params.RemoteImage), fmt.Sprintf("-n %v", params.Namespace)}
 	for k, v := range params.EnvVars {
-		envvarsArg += fmt.Sprintf("--env=\"%v=%v\" ", k, v)
+		args = append(args, fmt.Sprintf("--env=\"%v=%v\" ", k, v))
 	}
 
-	foundation.RunCommand("kubectl run %v --rm=true --restart=Never -i --image=%v %v -n %v", getJobName(), params.RemoteImage, envvarsArg, params.Namespace)
+	foundation.RunCommandWithArgs("kubectl", args)
 }
 
 func getJobName() string {
