@@ -7,8 +7,8 @@ This extension runs a stage remotely in a GKE cluster
 | Parameter             | Type              | Values                                                                                                                  |
 | --------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `credentials`         | string            | To set a specific set of type `kubernetes-engine` credentials; defaults to the release target name prefixed with `gke-` |
-| `env`                 | map[string]string | Environment variables to pass to the remote container                                                                   |
 | `namespace`           | string            | The namespace in which to run the container remotely; defaults to the namespace defined in the credentials              |
+| `remoteEnv`           | map[string]string | Environment variables to pass to the remote container                                                                   |
 | `remoteImage`         | string            | The full docker image path including repository and tag to run remotely                                                 |
 
 ## Usage
