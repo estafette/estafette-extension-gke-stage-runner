@@ -132,12 +132,19 @@ func main() {
 	}
 	foundation.RunCommandWithArgs(ctx, "gcloud", clustersGetCredentialsArsgs)
 
-	zerolog.Info().Msgf("Running image %v in GKE cluster %v...", params.RemoteImage, credential.AdditionalProperties.Cluster)
+	zerolog.Info().Msgf("Running image %v in GKE cluster %v...", params.Remote.ContainerImage, credential.AdditionalProperties.Cluster)
 
 	jobName := getJobName()
-	args := []string{"run", jobName, "--rm=true", "--restart=Never", "-i", fmt.Sprintf("--image=%v", params.RemoteImage), "-n", params.Namespace}
-	for k, v := range params.RemoteEnvVars {
+	args := []string{"run", jobName, "--rm=true", "--restart=Never", "-i", fmt.Sprintf("--image=%v", params.Remote.ContainerImage), "-n", params.Namespace}
+	for k, v := range params.Remote.EnvVars {
 		args = append(args, "--env", fmt.Sprintf("%v=%v", k, v))
+	}
+	if len(params.Remote.Commands) > 0 {
+		cmdSeparator := ";"
+		cmdStopOnErrorFlag := "set -e; "
+		combinedCommands := cmdStopOnErrorFlag + strings.Join(params.Remote.Commands, cmdSeparator)
+
+		args = append(args, "--command", "--", params.Remote.Shell, "-c", combinedCommands)
 	}
 	foundation.RunCommandWithArgs(ctx, "kubectl", args)
 }
