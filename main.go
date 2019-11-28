@@ -131,7 +131,7 @@ func main() {
 	zerolog.Info().Msgf("Running image %v in GKE cluster %v...", params.RemoteImage, credential.AdditionalProperties.Cluster)
 
 	jobName := getJobName()
-	args := []string{"run", jobName, "--rm=true", "--restart=Never", "-ti", fmt.Sprintf("--image=%v", params.RemoteImage), "-n", params.Namespace}
+	args := []string{"run", jobName, "--rm=true", "--restart=Never", "-i", fmt.Sprintf("--image=%v", params.RemoteImage), "-n", params.Namespace}
 	for k, v := range params.EnvVars {
 		args = append(args, "--env", fmt.Sprintf("%v=%v", k, v))
 	}
