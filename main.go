@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -47,6 +48,9 @@ func main() {
 
 	// init log format from envvar ESTAFETTE_LOG_FORMAT
 	foundation.InitLoggingFromEnv(appgroup, app, version, branch, revision, buildDate)
+
+	// create context to cancel commands on sigterm
+	ctx := foundation.InitCancellationContext(context.Background())
 
 	zerolog.Info().Msg("Unmarshalling credentials parameter...")
 	var params Params
@@ -109,13 +113,13 @@ func main() {
 	}
 
 	log.Printf("Authenticating to google cloud")
-	foundation.RunCommandWithArgs("gcloud", []string{"auth", "activate-service-account", saClientEmail, "--key-file", "/key-file.json"})
+	foundation.RunCommandWithArgs(ctx, "gcloud", []string{"auth", "activate-service-account", saClientEmail, "--key-file", "/key-file.json"})
 
 	log.Printf("Setting gcloud account to %v", saClientEmail)
-	foundation.RunCommandWithArgs("gcloud", []string{"config", "set", "account", saClientEmail})
+	foundation.RunCommandWithArgs(ctx, "gcloud", []string{"config", "set", "account", saClientEmail})
 
 	log.Printf("Setting gcloud project")
-	foundation.RunCommandWithArgs("gcloud", []string{"config", "set", "project", credential.AdditionalProperties.Project})
+	foundation.RunCommandWithArgs(ctx, "gcloud", []string{"config", "set", "project", credential.AdditionalProperties.Project})
 
 	log.Printf("Getting gke credentials for cluster %v", credential.AdditionalProperties.Cluster)
 	clustersGetCredentialsArsgs := []string{"container", "clusters", "get-credentials", credential.AdditionalProperties.Cluster}
@@ -126,7 +130,7 @@ func main() {
 	} else {
 		log.Fatal("Credentials have no zone or region; at least one of them has to be defined")
 	}
-	foundation.RunCommandWithArgs("gcloud", clustersGetCredentialsArsgs)
+	foundation.RunCommandWithArgs(ctx, "gcloud", clustersGetCredentialsArsgs)
 
 	zerolog.Info().Msgf("Running image %v in GKE cluster %v...", params.RemoteImage, credential.AdditionalProperties.Cluster)
 
@@ -135,7 +139,7 @@ func main() {
 	for k, v := range params.RemoteEnvVars {
 		args = append(args, "--env", fmt.Sprintf("%v=%v", k, v))
 	}
-	foundation.RunCommandWithArgs("kubectl", args)
+	foundation.RunCommandWithArgs(ctx, "kubectl", args)
 }
 
 func getJobName() string {
