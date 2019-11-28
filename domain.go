@@ -4,10 +4,10 @@ import "fmt"
 
 // Params are the parameters passed to this extension via the custom properties of the estafette stage
 type Params struct {
-	Credentials string            `json:"credentials,omitempty" yaml:"credentials,omitempty"`
-	EnvVars     map[string]string `json:"remoteEnv,omitempty" yaml:"remoteEnv,omitempty"`
-	RemoteImage string            `json:"remoteImage,omitempty" yaml:"remoteImage,omitempty"`
-	Namespace   string            `json:"namespace,omitempty" yaml:"namespace,omitempty"`
+	Credentials   string            `json:"credentials,omitempty" yaml:"credentials,omitempty"`
+	RemoteEnvVars map[string]string `json:"remoteEnv,omitempty" yaml:"remoteEnv,omitempty"`
+	RemoteImage   string            `json:"remoteImage,omitempty" yaml:"remoteImage,omitempty"`
+	Namespace     string            `json:"namespace,omitempty" yaml:"namespace,omitempty"`
 }
 
 // SetDefaults fills in empty fields with convention-based defaults
