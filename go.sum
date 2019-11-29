@@ -10,8 +10,8 @@ github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e/go.mod h1:F5haX7
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/estafette/estafette-foundation v0.0.36 h1:C6oduNz5KI+mKpfetoGlu9VcrHdlm3Va/08NVSRaDRY=
-github.com/estafette/estafette-foundation v0.0.36/go.mod h1:qwor2yVhvjc+ph63cl8dU1SZVFQO9m7VGY5AfBUJh44=
+github.com/estafette/estafette-foundation v0.0.37 h1:mIwv0xHSXToNKmt8KZgiM3Qg29G+y51QNYqvePkwjnI=
+github.com/estafette/estafette-foundation v0.0.37/go.mod h1:qwor2yVhvjc+ph63cl8dU1SZVFQO9m7VGY5AfBUJh44=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/go-kit/kit v0.8.0/go.mod h1:xBxKIO96dXMWWy0MnWVtmwkA9/13aqxPnvrjFYMA2as=

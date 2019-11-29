@@ -5,14 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"regexp"
 	"runtime"
 	"strings"
 
 	"github.com/alecthomas/kingpin"
 	foundation "github.com/estafette/estafette-foundation"
-	zerolog "github.com/rs/zerolog/log"
+	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v2"
 )
 
@@ -52,87 +51,87 @@ func main() {
 	// create context to cancel commands on sigterm
 	ctx := foundation.InitCancellationContext(context.Background())
 
-	zerolog.Info().Msg("Unmarshalling credentials parameter...")
+	log.Info().Msg("Unmarshalling credentials parameter...")
 	var params Params
 	err := yaml.Unmarshal([]byte(*paramsYAML), &params)
 	if err != nil {
-		log.Fatal("Failed unmarshalling credential parameter: ", err)
+		log.Fatal().Err(err).Msg("Failed unmarshalling credential parameter")
 	}
 
-	zerolog.Info().Msg("Setting default for credential parameter...")
+	log.Info().Msg("Setting default for credential parameter...")
 	params.SetDefaults(*releaseName)
 
-	zerolog.Info().Msg("Unmarshalling injected credentials...")
+	log.Info().Msg("Unmarshalling injected credentials...")
 	var credentials []GKECredentials
 	err = json.Unmarshal([]byte(*credentialsJSON), &credentials)
 	if err != nil {
-		log.Fatal("Failed unmarshalling injected credentials: ", err)
+		log.Fatal().Err(err).Msg("Failed unmarshalling injected credentials")
 	}
 
-	zerolog.Info().Msgf("Checking if credential %v exists...", params.Credentials)
+	log.Info().Msgf("Checking if credential %v exists...", params.Credentials)
 	credential := GetCredentialsByName(credentials, params.Credentials)
 	if credential == nil {
-		log.Fatalf("Credential with name %v does not exist.", params.Credentials)
+		log.Fatal().Err(err).Msgf("Credential with name %v does not exist.", params.Credentials)
 	}
 
-	zerolog.Info().Msg("Unmarshalling parameters / custom properties...")
+	log.Info().Msg("Unmarshalling parameters / custom properties...")
 	if credential.AdditionalProperties.Defaults != nil {
-		zerolog.Info().Msgf("Using defaults from credential %v...", params.Credentials)
+		log.Info().Msgf("Using defaults from credential %v...", params.Credentials)
 		params = *credential.AdditionalProperties.Defaults
 	}
 	err = yaml.Unmarshal([]byte(*paramsYAML), &params)
 	if err != nil {
-		log.Fatal("Failed unmarshalling parameters: ", err)
+		log.Fatal().Err(err).Msg("Failed unmarshalling parameters")
 	}
 
 	if *credentialsJSON == "" {
-		log.Fatal("Credentials of type kubernetes-engine are not injected; configure this extension as trusted and inject credentials of type kubernetes-engine")
+		log.Fatal().Err(err).Msg("Credentials of type kubernetes-engine are not injected; configure this extension as trusted and inject credentials of type kubernetes-engine")
 	}
 
-	log.Printf("Retrieving service account email from credentials...")
+	log.Info().Msg("Retrieving service account email from credentials...")
 	var keyFileMap map[string]interface{}
 	err = json.Unmarshal([]byte(credential.AdditionalProperties.ServiceAccountKeyfile), &keyFileMap)
 	if err != nil {
-		log.Fatal("Failed unmarshalling service account keyfile: ", err)
+		log.Fatal().Err(err).Msg("Failed unmarshalling service account keyfile")
 	}
 	var saClientEmail string
 	if saClientEmailIntfc, ok := keyFileMap["client_email"]; !ok {
-		log.Fatal("Field client_email missing from service account keyfile")
+		log.Fatal().Err(err).Msg("Field client_email missing from service account keyfile")
 	} else {
 		if t, aok := saClientEmailIntfc.(string); !aok {
-			log.Fatal("Field client_email not of type string")
+			log.Fatal().Err(err).Msg("Field client_email not of type string")
 		} else {
 			saClientEmail = t
 		}
 	}
 
-	log.Printf("Storing gke credential %v on disk...", params.Credentials)
+	log.Info().Msgf("Storing gke credential %v on disk...", params.Credentials)
 	err = ioutil.WriteFile("/key-file.json", []byte(credential.AdditionalProperties.ServiceAccountKeyfile), 0600)
 	if err != nil {
-		log.Fatal("Failed writing service account keyfile: ", err)
+		log.Fatal().Err(err).Msg("Failed writing service account keyfile")
 	}
 
-	log.Printf("Authenticating to google cloud")
+	log.Info().Msg("Authenticating to google cloud")
 	foundation.RunCommandWithArgs(ctx, "gcloud", []string{"auth", "activate-service-account", saClientEmail, "--key-file", "/key-file.json"})
 
-	log.Printf("Setting gcloud account to %v", saClientEmail)
+	log.Info().Msgf("Setting gcloud account to %v", saClientEmail)
 	foundation.RunCommandWithArgs(ctx, "gcloud", []string{"config", "set", "account", saClientEmail})
 
-	log.Printf("Setting gcloud project")
+	log.Info().Msg("Setting gcloud project")
 	foundation.RunCommandWithArgs(ctx, "gcloud", []string{"config", "set", "project", credential.AdditionalProperties.Project})
 
-	log.Printf("Getting gke credentials for cluster %v", credential.AdditionalProperties.Cluster)
+	log.Info().Msgf("Getting gke credentials for cluster %v", credential.AdditionalProperties.Cluster)
 	clustersGetCredentialsArsgs := []string{"container", "clusters", "get-credentials", credential.AdditionalProperties.Cluster}
 	if credential.AdditionalProperties.Zone != "" {
 		clustersGetCredentialsArsgs = append(clustersGetCredentialsArsgs, "--zone", credential.AdditionalProperties.Zone)
 	} else if credential.AdditionalProperties.Region != "" {
 		clustersGetCredentialsArsgs = append(clustersGetCredentialsArsgs, "--region", credential.AdditionalProperties.Region)
 	} else {
-		log.Fatal("Credentials have no zone or region; at least one of them has to be defined")
+		log.Fatal().Err(err).Msg("Credentials have no zone or region; at least one of them has to be defined")
 	}
 	foundation.RunCommandWithArgs(ctx, "gcloud", clustersGetCredentialsArsgs)
 
-	zerolog.Info().Msgf("Running image %v in GKE cluster %v...", params.Remote.ContainerImage, credential.AdditionalProperties.Cluster)
+	log.Info().Msgf("Running image %v in GKE cluster %v...", params.Remote.ContainerImage, credential.AdditionalProperties.Cluster)
 
 	jobName := getJobName()
 	args := []string{"run", jobName, "--rm=true", "--restart=Never", "-i", fmt.Sprintf("--image=%v", params.Remote.ContainerImage), "-n", params.Namespace}
