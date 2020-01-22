@@ -28,7 +28,7 @@ stages:
     action: build
     container: gke-stage-runner
     inline: |
-      FROM google/cloud-sdk:274.0.0-alpine
+      FROM google/cloud-sdk:277.0.0-alpine
 
       LABEL maintainer="estafette.io" \
             description="The ${ESTAFETTE_GIT_NAME} component is an Estafette extension to run a stage outside of the builder job in a different GKE cluster"
@@ -37,7 +37,7 @@ stages:
           && apk add --upgrade gnupg \
           && rm /var/cache/apk/*
 
-      RUN curl https://storage.googleapis.com/kubernetes-release/release/v1.15.4/bin/linux/amd64/kubectl --output /google-cloud-sdk/bin/kubectl \
+      RUN curl https://storage.googleapis.com/kubernetes-release/release/v1.16.4/bin/linux/amd64/kubectl --output /google-cloud-sdk/bin/kubectl \
           && chmod +x /google-cloud-sdk/bin/kubectl \
           && kubectl version --client
 
