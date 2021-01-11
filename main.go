@@ -35,9 +35,10 @@ var (
 	buildID   = kingpin.Flag("build-id", "Build ID.").Envar("ESTAFETTE_BUILD_ID").String()
 	releaseID = kingpin.Flag("release-id", "Release ID.").Envar("ESTAFETTE_RELEASE_ID").String()
 
-	stageName       = kingpin.Flag("stage-name", "The name of the.").Envar("ESTAFETTE_STAGE_NAME").Required().String()
-	releaseName     = kingpin.Flag("release-name", "Name of the release section, which is used by convention to resolve the credentials.").Envar("ESTAFETTE_RELEASE_NAME").String()
-	credentialsJSON = kingpin.Flag("credentials", "GKE credentials configured at api level, passed in to this trusted extension.").Envar("ESTAFETTE_CREDENTIALS_KUBERNETES_ENGINE").Required().String()
+	stageName   = kingpin.Flag("stage-name", "The name of the.").Envar("ESTAFETTE_STAGE_NAME").Required().String()
+	releaseName = kingpin.Flag("release-name", "Name of the release section, which is used by convention to resolve the credentials.").Envar("ESTAFETTE_RELEASE_NAME").String()
+
+	credentialsPath = kingpin.Flag("credentials-path", "Path to file with GKE credentials configured at service level, passed in to this trusted extension.").Default("/credentials/kubernetes_engine.json").String()
 )
 
 func main() {
@@ -63,9 +64,22 @@ func main() {
 
 	log.Info().Msg("Unmarshalling injected credentials...")
 	var credentials []GKECredentials
-	err = json.Unmarshal([]byte(*credentialsJSON), &credentials)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed unmarshalling injected credentials")
+	// use mounted credential file if present instead of relying on an envvar
+	if runtime.GOOS == "windows" {
+		*credentialsPath = "C:" + *credentialsPath
+	}
+	if foundation.FileExists(*credentialsPath) {
+		log.Info().Msgf("Reading credentials from file at path %v...", *credentialsPath)
+		credentialsFileContent, err := ioutil.ReadFile(*credentialsPath)
+		if err != nil {
+			log.Fatal().Msgf("Failed reading credential file at path %v.", *credentialsPath)
+		}
+		err = json.Unmarshal(credentialsFileContent, &credentials)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Failed unmarshalling injected credentials")
+		}
+	} else {
+		log.Fatal().Msg("Credentials of type kubernetes-engine are not injected; configure this extension as trusted and inject credentials of type kubernetes-engine")
 	}
 
 	log.Info().Msgf("Checking if credential %v exists...", params.Credentials)
@@ -82,10 +96,6 @@ func main() {
 	err = yaml.Unmarshal([]byte(*paramsYAML), &params)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed unmarshalling parameters")
-	}
-
-	if *credentialsJSON == "" {
-		log.Fatal().Err(err).Msg("Credentials of type kubernetes-engine are not injected; configure this extension as trusted and inject credentials of type kubernetes-engine")
 	}
 
 	log.Info().Msg("Retrieving service account email from credentials...")
